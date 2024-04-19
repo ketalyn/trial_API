@@ -1,75 +1,80 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>EYETRACKINGAPITEST</title>
-    <link rel="stylesheet" type="text/css" href="./main.css">
-
-    <script src="https://unpkg.com/heatmap.js"></script> <!-- Include heatmap.js library -->
+    <title>EYETRACKINGTRIAL</title>
     <script src="https://api.gazerecorder.com/GazeCloudAPI.js"></script>
-
     <style type="text/css">
         body {
             overflow: hidden;
-            margin: 0; /* Remove default margin */
-            padding: 0; /* Remove default padding */
         }
 
-        #heatmapContainer {
+        #gaze {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%; /* Cover entire width of the viewport */
-            height: 100vh; /* Cover entire height of the viewport */
+            display: none;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: solid 2px rgba(255, 255, 255, .2);
+            box-shadow: 0 0 100px 3px rgba(125, 125, 125, .5);
             pointer-events: none;
-            z-index: -1; /* Move heatmap behind other content */
+            z-index: 999999;
         }
     </style>
-
     <script type="text/javascript">
-        var heatmapInstance;
+        function PlotGaze(GazeData) {
+            document.getElementById("GazeData").innerHTML = "GazeX: " + GazeData.GazeX + " GazeY: " + GazeData.GazeY;
+            document.getElementById("HeadPhoseData").innerHTML = " HeadX: " + GazeData.HeadX + " HeadY: " + GazeData.HeadY + " HeadZ: " + GazeData.HeadZ;
+            document.getElementById("HeadRotData").innerHTML = " Yaw: " + GazeData.HeadYaw + " Pitch: " + GazeData.HeadPitch + " Roll: " + GazeData.HeadRoll;
 
-        window.addEventListener("load", function() {
-            // Initialize heatmap once the window is loaded
-            heatmapInstance = h337.create({
-                container: document.getElementById('heatmapContainer'), // Specify the container element
-                radius: 25 // Set the radius of the heatmap points
-            });
+            var x = GazeData.docX;
+            var y = GazeData.docY;
+            var gaze = document.getElementById("gaze");
+            x -= gaze.clientWidth / 2;
+            y -= gaze.clientHeight / 2;
 
-            // Callback function for plotting gaze
-            function PlotGaze(GazeData) {
-                // Your existing code for plotting gaze position
+            gaze.style.left = x + "px";
+            gaze.style.top = y + "px";
 
-                // Add gaze position to heatmap data
-                var x = GazeData.docX;
-                var y = GazeData.docY;
-                heatmapInstance.addData({ x: x, y: y, value: 1 });
+            // Toggle visibility of gaze element based on gaze data state
+            if (GazeData.state === 0) {
+                gaze.style.display = 'block';
+            } else {
+                gaze.style.display = 'none';
             }
 
-            // Set callbacks for gaze tracking events
-            GazeCloudAPI.OnCalibrationComplete = function(){ console.log('gaze Calibration Complete') };
-            GazeCloudAPI.OnCamDenied = function(){ console.log('camera access denied') };
-            GazeCloudAPI.OnError = function(msg){ console.log('err: ' + msg) };
+            // Blink detection
+            if (GazeData.LeftBlink || GazeData.RightBlink) {
+                // Change background color when a blink is detected
+                document.body.style.backgroundColor = "red"; // Change color to red, you can use any color you like
+            }
+        }
+
+        window.addEventListener("load", function() {
+            GazeCloudAPI.OnCalibrationComplete = function() {
+                console.log('gaze Calibration Complete');
+            };
+            GazeCloudAPI.OnCamDenied = function() {
+                console.log('camera access denied');
+            };
+            GazeCloudAPI.OnError = function(msg) {
+                console.log('err: ' + msg);
+            };
             GazeCloudAPI.UseClickRecalibration = true;
             GazeCloudAPI.OnResult = PlotGaze;
+
+            // Start eye tracking
+            GazeCloudAPI.StartEyeTracking();
         });
     </script>
 </head>
 <body>
-<h1>GazeCloudAPI integration example</h1>
-<button type="button" onclick="GazeCloudAPI.StartEyeTracking();">Start</button>
-<button type="button" onclick="GazeCloudAPI.StopEyeTracking();">Stop</button>
-<div>
-    <p>
-        Real-Time Result:
-    </p>
-    <p id="GazeData"></p>
-    <p id="HeadPhoseData"></p>
-    <p id="HeadRotData"></p>
-</div>
-<div id="gaze" style="position: absolute;display:none;width: 100px;height: 100px;border-radius: 50%;border: solid 2px rgba(255, 255,255, .2);box-shadow: 0 0 100px 3px rgba(125, 125,125, .5);pointer-events: none;z-index: 999999"></div>
-
-<!-- Create a container for the heatmap -->
-<div id="heatmapContainer"></div>
-
+    <h1>TRIAL</h1>
+    <div>
+        <p>Real-Time Result:</p>
+        <p id="GazeData"></p>
+        <p id="HeadPhoseData"></p>
+        <p id="HeadRotData"></p>
+    </div>
+    <div id="gaze"></div>
 </body>
 </html>
